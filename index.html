@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>रिंकू ऑटो सर्विस</title>
+    <style>
+        :root {
+            --primary: #ffcc00;
+            --dark: #1a1a1a;
+            --light: #333333;
+            --text: #ffffff;
+            --accent: #ff4444;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--dark);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: var(--light);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        h1 {
+            margin: 0;
+            color: var(--primary);
+        }
+
+        .contact-info {
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-around;
+            background-color: var(--light);
+            padding: 10px 0;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1em;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        nav button.active {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .service-card {
+            background-color: var(--light);
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .service-card:hover {
+            transform: scale(1.05);
+        }
+
+        .service-icon {
+            font-size: 2em;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .admin-section {
+            background-color: var(--light);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: var(--dark);
+            color: var(--text);
+            border: 1px solid var(--primary);
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button.action-btn {
+            background-color: var(--primary);
+            color: var(--dark);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        button.delete-btn {
+            background-color: var(--accent);
+            color: var(--text);
+            padding: 5px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .modal-content {
+            background-color: var(--light);
+            margin: 15% auto;
+            padding: 20px;
+            width: 80%;
+            border-radius: 10px;
+            color: var(--text);
+        }
+
+        .close {
+            color: var(--text);
+            float: right;
+            font-size: 28px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>रिंकू ऑटो सर्विस</h1>
+    <div class="contact-info">📞 संपर्क: 9XXXX-XXXXX</div>
+    <div class="contact-info">📍 पता: गांव पिल्लाना, तहसील असंध, जिला करनाल</div>
+</header>
+
+<nav>
+    <button id="nav-services" class="active" onclick="showSection('services')">सर्विसेज</button>
+    <button id="nav-admin" onclick="showSection('admin')">एडमिन</button>
+</nav>
+
+<div class="container">
+    
+    <div id="services-section">
+        <div class="services-grid" id="services-grid">
+            <!-- Services will appear here -->
+        </div>
+    </div>
+
+    <div id="admin-section" class="admin-section">
+        <h2>एडमिन कॉर्नर</h2>
+        <h3>नई सर्विस जोड़ें</h3>
+        <input type="text" id="new-service-name" placeholder="सर्विस का नाम">
+        <input type="text" id="new-service-icon" placeholder="आइकन (जैसे: ⚙️ या 🛠️)">
+        <input type="number" id="new-service-price" placeholder="अनुमानित रेट (₹)">
+        <button class="action-btn" onclick="addService()">सर्विस जोड़ें</button>
+        <hr style="border-color: var(--primary); margin: 20px 0;">
+        <h3>मौजूदा सर्विसेज हटाएं</h3>
+        <div id="admin-services-list"></div>
+    </div>
+
+</div>
+
+<div id="booking-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 id="modal-service-title">बुकिंग</h2>
+        <input type="text" id="customer-name" placeholder="आपका नाम">
+        <input type="text" id="bike-model" placeholder="बाइक मॉडल">
+        <input type="text" id="booking-phone" placeholder="मोबाइल नंबर">
+        <button class="action-btn" onclick="submitBooking()">बुकिंग कन्फर्म करें</button>
+    </div>
+</div>
+
+<script>
+    let services = [
+        {name: "ऑयल चेंज", icon: "💧", price: 500},
+        {name: "ब्रेक पैड चेंज", icon: "🛑", price: 300},
+        {name: "फुल इंजन सर्विस", icon: "⚙️", price: 2000},
+        {name: "फुल बाइक सर्विस", icon: "🏍️", price: 1000},
+        {name: "सीट कवर", icon: "💺", price: 400},
+        {name: "हेडलाइट्स", icon: "💡", price: 250}
+    ];
+
+    function showSection(section) {
+        document.getElementById('nav-services').classList.remove('active');
+        document.getElementById('nav-admin').classList.remove('active');
+        
+        const servicesSection = document.getElementById('services-section');
+        const adminSection = document.getElementById('admin-section');
+
+        if(section === 'services') {
+            servicesSection.style.display = 'block';
+            adminSection.style.display = 'none';
+            document.getElementById('nav-services').classList.add('active');
+            renderServices();
+        } else {
+            servicesSection.style.display = 'none';
+            adminSection.style.display = 'block';
+            document.getElementById('nav-admin').classList.add('active');
+            renderAdminList();
+        }
+    }
+
+    function renderServices() {
+        const grid = document.getElementById('services-grid');
+        grid.innerHTML = '';
+        services.forEach(service => {
+            const card = document.createElement('div');
+            card.className = 'service-card';
+            card.onclick = () => openModal(service.name);
+            card.innerHTML = `
+                <div class="service-icon">${service.icon}</div>
+                <div>${service.name}</div>
+                <div style="color: var(--primary); margin-top:5px;">₹${service.price}</div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function renderAdminList() {
+        const list = document.getElementById('admin-services-list');
+        list.innerHTML = '';
+        services.forEach((service, index) => {
+            const item = document.createElement('div');
+            item.style.display = 'flex';
+            item.style.justifyContent = 'space-between';
+            item.style.alignItems = 'center';
+            item.style.backgroundColor = 'var(--dark)';
+            item.style.padding = '10px';
+            item.style.margin = '10px 0';
+            item.style.borderRadius = '5px';
+            item.innerHTML = `
+                <span>${service.icon} ${service.name} (₹${service.price})</span>
+                <button class="delete-btn" onclick="deleteService(${index})">हटाएं</button>
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    function addService() {
+        const name = document.getElementById('new-service-name').value;
+        const icon = document.getElementById('new-service-icon').value;
+        const price = document.getElementById('new-service-price').value;
+
+        if(name && icon && price) {
+            services.push({name, icon, price: Number(price)});
+            document.getElementById('new-service-name').value = '';
+            document.getElementById('new-service-icon').value = '';
+            document.getElementById('new-service-price').value = '';
+            alert('सर्विस सफलतापूर्वक जोड़ी गई!');
+            renderAdminList();
+        } else {
+            alert('कृपया सभी फ़ील्ड भरें।');
+        }
+    }
+
+    function deleteService(index) {
+        services.splice(index, 1);
+        renderAdminList();
+    }
+
+    function openModal(serviceName) {
+        document.getElementById('modal-service-title').innerText = 'बुकिंग: ' + serviceName;
+        document.getElementById('booking-modal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('booking-modal').style.display = 'none';
+    }
+
+    function submitBooking() {
+        const name = document.getElementById('customer-name').value;
+        const bike = document.getElementById('bike-model').value;
+        const phone = document.getElementById('booking-phone').value;
+
+        if(name && bike && phone) {
+            alert('धन्यवाद, आपकी बुकिंग ले ली गई है। आपसे जल्द ही संपर्क किया जाएगा।');
+            closeModal();
+        } else {
+            alert('कृपया सभी जानकारी भरें।');
+        }
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('booking-modal');
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+
+    renderServices();
+</script>
+
+</body>
+</html>
